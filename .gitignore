@@ -1,0 +1,19 @@
+# byte-compiled
+__pycache__/
+
+# jupyter notebook
+.ipynb_checkpoints
+
+# environments
+env/
+venv/
+.venv/
+
+# data and model artifacts
+data/
+
+# OS generated files
+.DS_Store
+
+# html
+*.html
