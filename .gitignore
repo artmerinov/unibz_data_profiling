@@ -11,6 +11,7 @@ venv/
 
 # data and model artifacts
 data/
+metanome/
 
 # OS generated files
 .DS_Store
