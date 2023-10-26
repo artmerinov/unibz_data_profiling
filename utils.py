@@ -2,6 +2,9 @@ import numpy as np
 from scipy.stats import multivariate_normal
 import matplotlib.pyplot as plt
 
+import plotly.graph_objs as go
+import plotly.offline as pyo
+
 
 def plot_contingency_table(table, meta):
 
@@ -36,7 +39,7 @@ def plot_binorm_distr_3d(rho):
 
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(x, y, pdf, cmap='coolwarm')
+    ax.plot_surface(x, y, pdf, cmap='YlGnBu')
     ax.set_title(f'Bivariate Normal with rho={rho}')
     ax.set_xlabel('x')
     ax.set_ylabel('y')
@@ -49,18 +52,20 @@ def plot_binorm_distr_2d(rho, grid=None):
     x, y, pdf = generate_binorm_distr(rho=rho)
 
     plt.figure(figsize=(5,5))
-    plt.contourf(x, y, pdf, levels=10, cmap='coolwarm')
+    plt.contourf(x, y, pdf, levels=7, cmap='YlGnBu')
     plt.title(f'Bivariate Normal with rho={rho}')
     plt.xlabel('x')
     plt.ylabel('y')
-    plt.xlim((-3,3))
-    plt.ylim((-3,3))
+    plt.xlim((-2.5, 2.5))
+    plt.ylim((-2.5, 2.5))
     if grid:
         for cell in grid:
             lower, upper = cell
             x_rect = [lower[0], upper[0], upper[0], lower[0], lower[0]]
             y_rect = [lower[1], lower[1], upper[1], upper[1], lower[1]]
             plt.plot(x_rect, y_rect, 'k-', lw=0.3)
+    else:
+        plt.grid(linewidth=0.3, color='k')
     plt.show()
 
 
