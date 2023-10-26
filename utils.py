@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import multivariate_normal
 import matplotlib.pyplot as plt
 
 
@@ -27,3 +28,48 @@ def plot_contingency_table(table, meta):
     plt.xlabel(meta['xlabel'])
     plt.ylabel(meta['ylabel'])
     plt.show()
+
+
+def plot_binorm_distr_3d(rho):
+
+    x, y, pdf = generate_binorm_distr(rho=rho)
+
+    fig = plt.figure(figsize=(4, 4))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(x, y, pdf, cmap='coolwarm')
+    ax.set_title(f'Bivariate Normal with rho={rho}')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('PDF')
+    plt.show()
+
+
+def plot_binorm_distr_2d(rho):
+
+    x, y, pdf = generate_binorm_distr(rho=rho)
+
+    plt.figure(figsize=(4,4))
+    plt.contourf(x, y, pdf, levels=10, cmap='coolwarm')
+    plt.title(f'Bivariate Normal with rho={rho}')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.xlim((-3,3))
+    plt.ylim((-3,3))
+    plt.grid()
+    plt.show()
+
+
+def generate_binorm_distr(rho):
+    """
+    Generate data for a bivariate normal distribution 
+    with a specified correlation coefficient (rho).
+    """
+    # gererate a grid
+    x, y = np.mgrid[-5:5:0.01, -5:5:0.01]
+    pos = np.dstack((x, y))
+
+    mu = np.array([0.0, 0.0])
+    sigma = np.array([[1.0, rho], [rho, 1.0]])
+    pdf = multivariate_normal(mean=mu, cov=sigma, seed=0).pdf(pos)
+
+    return x, y, pdf

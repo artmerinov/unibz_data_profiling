@@ -124,11 +124,9 @@ def chi_squared_statistic(table):
     return chi_squared
 
 
-
-
 def phi_c_correlation(x, y):
     """
-    Calculate the Cramer correlation coefficient.
+    Calculate the Cramer's correlation coefficient.
     """
     table, meta = calc_contingency_table(x, y)
     chi_squared = chi_squared_statistic(table)
