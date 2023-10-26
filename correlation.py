@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import multivariate_normal
 
 
 def pearson_correlation(x, y):
@@ -42,50 +43,67 @@ def spearman_correlation(x, y):
     return rho
 
 
-def create_buckets(arr, bins=10, mode='uniform'):
+def create_buckets(arr, bins=10):
     """
-    Assigns values in an array to buckets based on specified binning criteria.
+    Assigns values in an array to buckets.
+
+    Returns bucket number for each value and 
+    mapping from bucket id to interval range.
     """
-    if mode == 'uniform':
-        bin_edges = np.linspace(arr.min(), arr.max(), bins + 1)
-    elif mode == 'quntile':
-        quantiles = np.linspace(0, 100, bins + 1)
-        bin_edges = np.percentile(a=arr, q=quantiles)
-    else:
-        raise ValueError("Invalid mode")
+    max = np.max(arr)
+    min = np.min(arr)
+
+    # for each value in array assign a bucket
+    bucket_size = (max - min) / bins
+    bin_edges = np.arange(min, max, bucket_size)
+    buckets = np.digitize(x=arr, bins=bin_edges, right=False)
+
+    # create mapping bucket2interval (for visualisation)
+    intervals = []
+    for i in range(len(bin_edges) - 1):
+        intervals.append(f"{bin_edges[i]:.3f} - {bin_edges[i + 1]:.3f}")
+    intervals.append(f"{bin_edges[i + 1]:.3f} - {max:.3f}")
+    bucket2interval = {i + 1: interval for i, interval in enumerate(intervals)}
     
-    bin_indices = np.digitize(x=arr, bins=bin_edges)
-    bin_indices_str = [str(i) for i in bin_indices]
-
-    return bin_indices_str
+    return buckets, bucket2interval
 
 
-def contingency_table(x, y):
+def calc_contingency_table(x, y, xbins=10, ybins=10, xlabel=None, ylabel=None):
     """
     Create a contingency table from paired variables (x, y).
 
     The input variables can be a mix of categorical and numerical data. 
-    If the input variable is numerical, is is automatically divided into buckets.
+    If the input variable is numerical, it will be automatically divided into buckets.
     """
-    assert len(x) == len(y), "Input variables must be the same length!"
-
+    x_bucket2interval = None
+    y_bucket2interval = None
+    
     if all(isinstance(xi, (int, float, np.int64)) for xi in x):
-        x = create_buckets(x)
+        x, x_bucket2interval = create_buckets(x, bins=xbins)
 
     if all(isinstance(yi, (int, float, np.int64)) for yi in y):
-        y = create_buckets(y)
+        y, y_bucket2interval = create_buckets(y, bins=ybins)
 
     categories_x = list(np.unique(x))
     categories_y = list(np.unique(y))
 
-    table = np.zeros((len(categories_x), len(categories_y)), dtype='int64')
-    
+    nx = len(categories_x)
+    ny = len(categories_y)
+
+    table = np.zeros((nx, ny), dtype='int64')
     for xi, yi in zip(x, y):
         x_index = categories_x.index(xi)
         y_index = categories_y.index(yi)
         table[x_index, y_index] += 1
+
+    # save useful artifacts for visualisation
+    meta = {}
+    meta['xticks'] = [x_bucket2interval[i] for i in categories_x] if x_bucket2interval else categories_x
+    meta['yticks'] = [y_bucket2interval[i] for i in categories_y] if y_bucket2interval else categories_y
+    meta['xlabel'] = xlabel
+    meta['ylabel'] = ylabel
     
-    return table
+    return table, meta
 
 
 def chi_squared_statistic(table):
@@ -100,22 +118,26 @@ def chi_squared_statistic(table):
     for i in range(table.shape[0]):
         for j in range(table.shape[1]):
             expected = (row_sums[i] * col_sums[j]) / total_sum
-            chi_squared += (table[i, j] - expected) ** 2 / expected
+            observed = table[i, j]
+            chi_squared += (observed - expected) ** 2 / expected
     
     return chi_squared
 
 
-def phi_k_correlation(x, y):
+
+
+def phi_c_correlation(x, y):
     """
-    Calculate the Phi-K correlation coefficient.
+    Calculate the Cramer correlation coefficient.
     """
-    table = contingency_table(x, y)
+    table, meta = calc_contingency_table(x, y)
     chi_squared = chi_squared_statistic(table)
-    
+
     n = len(x)
     k = table.shape[0]
     r = table.shape[1]
-    
-    phi_k = np.sqrt(chi_squared / (n * min(k - 1, r - 1)))
 
+    phi_k = np.sqrt(chi_squared / (n * min(k - 1, r - 1)))
     return phi_k
+
+
