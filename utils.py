@@ -34,7 +34,7 @@ def plot_binorm_distr_3d(rho):
 
     x, y, pdf = generate_binorm_distr(rho=rho)
 
-    fig = plt.figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(111, projection='3d')
     ax.plot_surface(x, y, pdf, cmap='coolwarm')
     ax.set_title(f'Bivariate Normal with rho={rho}')
@@ -44,18 +44,23 @@ def plot_binorm_distr_3d(rho):
     plt.show()
 
 
-def plot_binorm_distr_2d(rho):
+def plot_binorm_distr_2d(rho, grid=None):
 
     x, y, pdf = generate_binorm_distr(rho=rho)
 
-    plt.figure(figsize=(4,4))
+    plt.figure(figsize=(5,5))
     plt.contourf(x, y, pdf, levels=10, cmap='coolwarm')
     plt.title(f'Bivariate Normal with rho={rho}')
     plt.xlabel('x')
     plt.ylabel('y')
     plt.xlim((-3,3))
     plt.ylim((-3,3))
-    plt.grid()
+    if grid:
+        for cell in grid:
+            lower, upper = cell
+            x_rect = [lower[0], upper[0], upper[0], lower[0], lower[0]]
+            y_rect = [lower[1], lower[1], upper[1], upper[1], lower[1]]
+            plt.plot(x_rect, y_rect, 'k-', lw=0.3)
     plt.show()
 
 
