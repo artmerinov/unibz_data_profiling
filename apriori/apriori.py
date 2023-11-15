@@ -1,48 +1,82 @@
-def get_basket(transactions):
+from itertools import combinations
+
+
+# def generate_candidates(schema, k):
+#     result = []
+#     for comb in combinations(schema, k):
+#         # ensure that elements are in lexicographic order
+#         if all(comb[i] < comb[i + 1] for i in range(len(comb) - 1)):
+#             result.append(''.join(comb))
+#     return result
+
+
+def generate_candidates(schema, k, frequent_items_prev):
     """
-    Returns list of all unique items based on transactions 
-    (in lexicographical order).
+    Generate all possible candidates of size k based on the initial schema 
+    (lexicographical order) and frequent items from the previous layer.
+
+    Note, that we don't generate all possible combinations. 
+    
+    1. We use information about lexicographical order: each new item 
+    will be added iff it is greater than the previous one. For example, 
+    for schema {'a', 'b', 'c'} we will geneerage only {'ab', 'ac', 'bc'}
+
+    2. We use inforamtion about frequent items from prevous layer. Since 
+    specification of infrequent itemset will be also infrequent, 
+    we generate candidates from parents that are frequent.
     """
-    # basket = sorted(set(item for transaction in transactions for item in transaction))
-    basket = set(item for transaction in transactions for item in transaction)
-    return basket
-
-
-def get_item_codes_dict(basket):
-    """
-    Creates mapping of items and its code names
-    (keys are in lexicographical order).
-    """
-    item_codes_dict = {item: format(i, 'b') for i, item in enumerate(basket)}
-    return item_codes_dict
-
-
-def encode_transaction(transaction, item_codes_dict):
-    """
-    Encodes transaction into code name in lexicographical order.
-    """
-    # by defalut keys of our dictionary are sorted lexicographically
-    transaction_code = ''.join(item_codes_dict[item] for item in transaction)
-    return transaction_code
-
-
-def decode_transaction(transaction_code, item_codes):
-    decoded_items = []
-
-    while transaction_code:
-        max_match_length = 0
-        matched_item = None
-
-        for item, code in item_codes.items():
-            if transaction_code.startswith(code) and len(code) > max_match_length:
-                max_match_length = len(code)
-                matched_item = item
-
-        if matched_item is not None:
-            decoded_items.append(matched_item)
-            transaction_code = transaction_code[max_match_length:]
+    candidates = []
+    stack = []
+    
+    i = 0
+    while True:
+        if len(stack) == k:
+            candidate = ''.join(stack)
+            if candidate[:-1] in frequent_items_prev:
+                candidates.append(candidate)
+            i += 1
+        if len(stack) == k or i == len(schema):
+            if not stack:
+                break
+            last_item = stack.pop()
+            i = schema.index(last_item) + 1
         else:
-            # If no match is found, break the loop
-            break
+            stack.append(schema[i])
+            i += 1
 
-    return decoded_items
+        # print(f'i={i}, stack={stack}, candidates={candidates}')
+
+    # # print lists of child elements for each parent
+    # for parent in schema:
+    #     child_list = [child for child in candidates if child.startswith(parent)]
+    #     print(f'parent {parent}: {", ".join(child_list)}')
+
+    return candidates
+
+
+def is_frequent(candidate, transactions, support_threshold):
+    """
+    Checks wheether candidate is frequent or not.
+    """
+    accurances = 0
+    for t in transactions:
+        if set(candidate).issubset(set(t)):
+            accurances += 1
+    return accurances >= support_threshold
+
+
+def apriori(transactions, support_thr):
+    
+    items = [item for transaction in transactions for item in transaction]
+    schema = sorted(list(set(items)))
+
+    # the first layer is frequent items from schema
+    frequent_items = {1: [c for c in schema if is_frequent(c, transactions, support_thr)]}
+    
+    k = 1
+    while frequent_items[k]: # while previous layer is not empty
+        k += 1
+        candidates_k = generate_candidates(schema=schema, k=k, frequent_items_prev=frequent_items[k-1])
+        frequent_items[k] = [c for c in candidates_k if is_frequent(c, transactions, support_thr)]
+
+    return frequent_items

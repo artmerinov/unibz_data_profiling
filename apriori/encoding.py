@@ -78,3 +78,13 @@ def decode_transaction(transaction_code, item2code_mapping):
             break
 
     return decoded_items
+
+
+def encode_all_transactions(transactions, item_codes_dict):
+
+    encoded_transactions = []
+    for transaction in transactions:
+        encoded_transaction = encode_transaction(transaction, item_codes_dict)
+        encoded_transactions.append(encoded_transaction)
+
+    return encoded_transactions
